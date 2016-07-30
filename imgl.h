@@ -1,5 +1,5 @@
-#ifndef GL_H
-#define GL_H
+#ifndef IMGL_H
+#define IMGL_H
 
 #ifdef HAVE_OPENGLES2
 #include <GLES2/gl2.h>
@@ -9,24 +9,18 @@
 #include <GL/glew.h>
 #endif
 
-#ifdef VCDEBUG
+#if 1
 #define GL(func) \
     do { \
         func; \
         int err = glGetError(); \
         if (err != 0) { \
-            printf(#func " failed: %d\n", err); \
+            fprintf(stderr, #func " failed: %d\n", err); \
         } \
     } while(0)
 #else
 #define GL(func) func
 #endif
-
-struct VCProgram {
-    GLuint vertexShader;
-    GLuint fragmentShader;
-    GLuint program;
-};
 
 #endif
 
