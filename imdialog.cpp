@@ -299,7 +299,7 @@ static void ProcessOKCancelButton(UIStatus *status, const char *data) {
 
 // Caller is responsible for freeing the result.
 static char *GetFullPath(const char *path, size_t path_length, const char *filename) {
-    size_t filename_length = strlen(path) + 1;
+    size_t filename_length = strlen(filename) + 1;
     char *full_path = (char *)malloc(path_length + filename_length + 2);
     snprintf(full_path, path_length + filename_length + 2, "%s/%s", path, filename);
     return full_path;
