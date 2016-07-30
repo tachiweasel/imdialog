@@ -172,7 +172,7 @@ static char *GetDataFilePath(const char *filename) {
 }
 
 static void Usage() {
-    fprintf(stderr, "usage: imdialog [--fselect|--inputbox|--menu] args...\n");
+    fprintf(stderr, "usage: imdialog [--no-cancel] [--fselect|--inputbox|--menu] args...\n");
     exit(EXIT_SUCCESS);
 }
 
@@ -255,6 +255,11 @@ static UI ParseCommandLine(int argc, const char **argv) {
     argc--;
     argv++;
 
+    if (strcmp(argv[0], "--no-cancel") == 0) {
+        argc--;
+        argv++;
+    }
+
     if (argc == 0)
         Usage();
     if (strcmp(argv[0], "--fselect") == 0)
@@ -288,12 +293,12 @@ static void ProcessOKCancelButton(UIStatus *status, const char *data) {
     if (ImGui::Button("OK", button_size)) {
         status->Done = true;
         status->ExitCode = 0;
-        puts(data);
+        fprintf(stderr, "%s\n", data);
     }
     if (ImGui::Button("Cancel", button_size)) {
         status->Done = true;
         status->ExitCode = 1;
-        puts(data);
+        fprintf(stderr, "%s\n", data);
     }
 }
 
@@ -407,7 +412,7 @@ static UIStatus ProcessFileUI(UI *ui) {
             if ((stats.st_mode & S_IFDIR) == 0) {
                 status.Done = true;
                 status.ExitCode = 0;
-                puts(full_path);
+                fprintf(stderr, "%s\n", full_path);
             } else {
                 free(ui->Data.File.Path);
                 ui->Data.File.Path = strdup(full_path);
@@ -447,7 +452,7 @@ static UIStatus ProcessInputUI(UI *ui) {
                          ImGuiInputTextFlags_EnterReturnsTrue)) {
         status.Done = true;
         status.ExitCode = 0;
-        puts(ui->Data.Input.Data);
+        fprintf(stderr, "%s\n", ui->Data.Input.Data);
     }
     ImGui::PopItemWidth();
     ProcessOKCancelButton(&status, ui->Data.Input.Data);
@@ -461,7 +466,7 @@ static UIStatus ProcessMenuUI(UI *ui) {
         const MenuItem *item = &ui->Data.Menu.Items[item_index];
         if (ImGui::Selectable(item->Tag, false, 0, button_size)) {
             status.Done = true;
-            puts(item->Tag);
+            fprintf(stderr, "%s\n", item->Tag);
         }
         if (item->Item != NULL) {
             ImGui::PushFont(g_ImDialogState.labelFont);
