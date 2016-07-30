@@ -4,11 +4,18 @@
 #include "imgl.h"
 #include <SDL2/SDL.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <dirent.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __linux__
+#include <sys/ioctl.h>
+#include <linux/kd.h>
+#include <linux/keyboard.h>
+#endif
 
 #ifdef HAVE_OPENGLES2
 #define FRAMEBUFFER_WIDTH   1920
@@ -33,6 +40,13 @@
 #define INITIAL_DIRECTORY_ENTRY_CAPACITY    4
 
 #define LIST_HEIGHT 5
+
+#ifndef KDSKBMUTE
+#define KDSKBMUTE   0x4B51
+#endif
+#ifndef KDSKBMODE
+#define KDSKBMODE   0x4B45
+#endif
 
 struct MenuItem {
     const char *Tag;
@@ -766,6 +780,15 @@ extern "C" int main(int argc, char **argv) {
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();
+
+#ifdef __linux__
+    int tty = fileno(stdin);
+    if (isatty(tty)) {
+        if (ioctl(tty, KDSKBMUTE, 0) != 0)
+            ioctl(tty, KDBKBMODE, K_XLATE);
+    }
+#endif
+
     return status.ExitCode;
 }
 
