@@ -31,6 +31,7 @@
 
 #define WINDOW_WIDTH    50
 
+#define FONT_FILENAME       "Muli.ttf"
 #define STANDARD_FONT_SIZE  ((float)FRAMEBUFFER_HEIGHT / 16.6666f)
 #define LABEL_FONT_SIZE     ((float)FRAMEBUFFER_HEIGHT / 25.0f)
 
@@ -127,6 +128,47 @@ static char *xstrsep(char **stringp, const char* delim) {
 
 static float ToPixelSize(uint32_t characterSize) {
     return (float)characterSize / (float)CHARACTER_SCREEN_WIDTH * (float)FRAMEBUFFER_WIDTH;
+}
+
+static char *GetDataFilePath(const char *filename) {
+    char *path = (char *)malloc(PATH_MAX + 1);
+    char *dataHome = getenv("XDG_DATA_HOME");
+    if (dataHome == NULL || dataHome[0] == '\0') {
+        const char *home = getenv("HOME");
+        if (home == NULL)
+            home = ".";
+        snprintf(path, PATH_MAX, "%s/.local/share/imdialog/%s", home, filename);
+    } else {
+        snprintf(path, PATH_MAX, "%s/imdialog/%s", dataHome, filename);
+    }
+
+    struct stat stats;
+    if (stat(path, &stats) == 0)
+        return path;
+
+    const char *dataDirsLocation = getenv("XDG_DATA_DIRS");
+    if (dataDirsLocation == NULL || dataDirsLocation[0] == '\0')
+        dataDirsLocation = "/usr/local/share/:/usr/share/";
+    char *dataDirs = strdup(dataDirsLocation);
+    char *dataDir;
+    while ((dataDir = xstrsep(&dataDirs, ":")) != NULL) {
+        snprintf(path, PATH_MAX, "%s/imdialog/%s", dataDir, filename);
+        if (stat(path, &stats) == 0)
+            return path;
+    }
+
+    snprintf(path, PATH_MAX, "./%s", filename);
+    if (stat(path, &stats) == 0)
+        return path;
+
+    fprintf(stderr,
+            "error: couldn't find data file `%s`: try installing it to "
+            "`~/.local/share/imdialog/%s` or "
+            "`/usr/local/share/imdialog/%s`\n",
+            filename,
+            filename,
+            filename);
+    exit(1);
 }
 
 static void Usage() {
@@ -595,10 +637,13 @@ static void CreateDialogState() {
     ImGuiIO &io = ImGui::GetIO();
     uint8_t *pixels = NULL;
     int width = 0, height = 0;
-    g_ImDialogState.standardFont = io.Fonts->AddFontFromFileTTF("Muli.ttf",
+    char *ui_font_path = GetDataFilePath(FONT_FILENAME);
+    g_ImDialogState.standardFont = io.Fonts->AddFontFromFileTTF(ui_font_path,
                                                                 STANDARD_FONT_SIZE,
                                                                 NULL);
-    g_ImDialogState.labelFont = io.Fonts->AddFontFromFileTTF("Muli.ttf", LABEL_FONT_SIZE, NULL);
+    g_ImDialogState.labelFont = io.Fonts->AddFontFromFileTTF(ui_font_path, LABEL_FONT_SIZE, NULL);
+    free(ui_font_path);
+
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
     glGenTextures(1, &g_ImDialogState.FontTexture);
