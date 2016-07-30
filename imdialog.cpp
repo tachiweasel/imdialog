@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef __linux__
 #include <sys/ioctl.h>
@@ -785,7 +786,7 @@ extern "C" int main(int argc, char **argv) {
     int tty = fileno(stdin);
     if (isatty(tty)) {
         if (ioctl(tty, KDSKBMUTE, 0) != 0)
-            ioctl(tty, KDBKBMODE, K_XLATE);
+            ioctl(tty, KDSKBMODE, K_XLATE);
     }
 #endif
 
